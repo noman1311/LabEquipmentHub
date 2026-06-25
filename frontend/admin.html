@@ -1,0 +1,1384 @@
+<!-- admin.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lab Equipment Hub — Admin Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0f1e;
+      --surface: #111827;
+      --surface2: #1a2236;
+      --surface3: #1f2d44;
+      --border: rgba(99,179,237,0.12);
+      --accent: #3b82f6;
+      --accent2: #06b6d4;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --admin-accent: #a855f7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(168,85,247,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(168,85,247,0.02) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: 240px;
+      height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      padding: 24px 0;
+    }
+    .sidebar-logo {
+      padding: 0 24px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--admin-accent), #ec4899);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      margin-bottom: 10px;
+      box-shadow: 0 0 20px rgba(168,85,247,0.3);
+    }
+    .logo-text {
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #c084fc, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .logo-sub {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+      letter-spacing: 1px;
+    }
+    .admin-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      background: rgba(168,85,247,0.15);
+      border: 1px solid rgba(168,85,247,0.3);
+      border-radius: 20px;
+      font-size: 10px;
+      color: #c084fc;
+      font-family: 'Space Mono', monospace;
+      margin-top: 6px;
+    }
+    .nav {
+      flex: 1;
+      padding: 20px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+      transition: all 0.2s;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: rgba(168,85,247,0.12); color: #c084fc; }
+    .nav-item .icon { font-size: 16px; width: 20px; }
+    .nav-section {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      padding: 16px 14px 6px;
+      font-family: 'Space Mono', monospace;
+    }
+    .sidebar-bottom {
+      padding: 16px 12px;
+      border-top: 1px solid var(--border);
+    }
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--surface2);
+      border-radius: 10px;
+    }
+    .user-avatar {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--admin-accent), #ec4899);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .user-info { flex: 1; min-width: 0; }
+    .user-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-role { font-size: 11px; color: #c084fc; }
+    .logout-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 4px;
+      transition: color 0.2s;
+    }
+    .logout-btn:hover { color: var(--danger); }
+
+    /* MAIN */
+    .main {
+      margin-left: 240px;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+    .topbar {
+      position: sticky;
+      top: 0;
+      background: rgba(10,15,30,0.9);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 50;
+    }
+    .topbar-title { font-size: 20px; font-weight: 600; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+    .btn {
+      padding: 9px 18px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'DM Sans', sans-serif;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--admin-accent), #ec4899);
+      color: white;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(168,85,247,0.3); }
+    .btn-ghost {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--surface3); }
+    .btn-danger {
+      background: rgba(239,68,68,0.1);
+      color: #fca5a5;
+      border: 1px solid rgba(239,68,68,0.2);
+    }
+    .btn-danger:hover { background: rgba(239,68,68,0.2); }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn-success {
+      background: rgba(34,197,94,0.1);
+      color: #86efac;
+      border: 1px solid rgba(34,197,94,0.2);
+    }
+    .btn-success:hover { background: rgba(34,197,94,0.2); }
+
+    .content { padding: 32px; }
+
+    /* STATS */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+      transition: transform 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-2px); }
+    .stat-icon { font-size: 22px; margin-bottom: 14px; }
+    .stat-value { font-size: 30px; font-weight: 700; font-family: 'Space Mono', monospace; }
+    .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* TABLES */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+    .table-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .table-title { font-size: 15px; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      padding: 12px 20px;
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+    tbody td {
+      padding: 13px 20px;
+      font-size: 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: rgba(168,85,247,0.03); }
+    .mono { font-family: 'Space Mono', monospace; font-size: 12px; }
+
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'Space Mono', monospace;
+    }
+    .badge-available { background: rgba(34,197,94,0.12); color: var(--success); border: 1px solid rgba(34,197,94,0.2); }
+    .badge-issued { background: rgba(239,68,68,0.12); color: var(--danger); border: 1px solid rgba(239,68,68,0.2); }
+    .badge-maintenance { background: rgba(245,158,11,0.12); color: var(--warning); border: 1px solid rgba(245,158,11,0.2); }
+
+    /* PAGES */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+      transform: scale(0.95);
+      transition: transform 0.2s;
+    }
+    .modal-overlay.open .modal { transform: scale(1); }
+    .modal-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+    .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+    .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+    .form-group { margin-bottom: 18px; }
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      font-family: 'Space Mono', monospace;
+    }
+    input, select {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-size: 14px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus { border-color: var(--admin-accent); box-shadow: 0 0 0 3px rgba(168,85,247,0.12); }
+    select option { background: var(--surface2); }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    /* MANUAL SCAN */
+    .scan-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 28px;
+    }
+    .scan-panel h3 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+    .scan-panel p { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+    .scan-row { display: flex; gap: 10px; }
+    .scan-row input { flex: 1; }
+    .scan-result {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      display: none;
+    }
+    .scan-result.found { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2); color: #86efac; }
+    .scan-result.not-found { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #fca5a5; }
+
+    /* TOAST */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+      animation: slideIn 0.3s ease;
+      min-width: 280px;
+    }
+    .toast.success { border-color: rgba(34,197,94,0.3); }
+    .toast.error { border-color: rgba(239,68,68,0.3); }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+    .empty-state { text-align: center; padding: 40px; color: var(--muted); }
+    .empty-icon { font-size: 36px; margin-bottom: 10px; }
+    .empty-title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .section-title { font-size: 16px; font-weight: 600; }
+
+    .eq-name-cell { font-weight: 500; }
+    .eq-cat { font-size: 12px; color: var(--muted); }
+
+    .actions-cell { display: flex; gap: 6px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">⚙️</div>
+      <div class="logo-text">Admin Panel</div>
+      <div class="logo-sub">LabEquipmentHub</div>
+      <div class="admin-badge">ADMINISTRATOR</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">Overview</div>
+      <button class="nav-item active" onclick="showPage('dashboard')">
+        <span class="icon">📊</span> Dashboard
+      </button>
+      <div class="nav-section">Management</div>
+      <button class="nav-item" onclick="showPage('equipment')">
+        <span class="icon">🔧</span> Equipment
+      </button>
+      <button class="nav-item" onclick="showPage('users')">
+        <span class="icon">👥</span> Users
+      </button>
+      <div class="nav-section">Records</div>
+      <button class="nav-item" onclick="showPage('logs')">
+        <span class="icon">📋</span> Activity Logs
+      </button>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="user-chip">
+        <div class="user-avatar" id="sidebar-avatar">A</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-name">Admin</div>
+          <div class="user-role">Administrator</div>
+        </div>
+        <button class="logout-btn" onclick="doLogout()" title="Logout">⏏</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">Admin Dashboard</div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="openAddEquipmentModal()">+ Add Equipment</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD PAGE -->
+      <div class="page active" id="page-dashboard">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">🔧</div>
+            <div class="stat-value" id="stat-total">—</div>
+            <div class="stat-label">Total Equipment</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-value" id="stat-available">—</div>
+            <div class="stat-label">Available</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📦</div>
+            <div class="stat-value" id="stat-issued">—</div>
+            <div class="stat-label">Issued Out</div>
+          </div>
+          <!-- <div class="stat-card">
+            <div class="stat-icon">🛠️</div>
+            <div class="stat-value" id="stat-maintenance">—</div>
+            <div class="stat-label">Maintenance</div>
+          </div> -->
+          <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-value" id="stat-users">—</div>
+            <div class="stat-label">Registered Users</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📋</div>
+            <div class="stat-value" id="stat-logs">—</div>
+            <div class="stat-label">Total Transactions</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🚨</div>
+            <div class="stat-value" id="stat-overdue">0</div>
+            <div class="stat-label">Overdue Items</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-value" id="stat-fine">0</div>
+            <div class="stat-label">Outstanding Fine (Tk)</div>
+          </div>
+        </div>
+
+        <div class="section-header">
+          <div class="section-title">Recent Activity</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Equipment</th>
+                <th>Action</th>
+                <th>User</th>
+                <th>RFID</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody id="recent-logs">
+              <tr><td colspan="5" style="text-align:center;padding:28px;color:var(--muted);">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="section-header">
+          <div class="section-title">🚨 Overdue Equipment</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Equipment</th>
+                <th>Borrower</th>
+                <th>Due Date</th>
+                <th>Days Overdue</th>
+                <th>Fine</th>
+              </tr>
+            </thead>
+            <tbody id="overdue-table">
+              <tr><td colspan="5" style="text-align:center;padding:28px;color:var(--muted);">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- EQUIPMENT PAGE -->
+      <div class="page" id="page-equipment">
+        <div class="section-header">
+          <div class="section-title">Equipment Registry</div>
+          <button class="btn btn-primary" onclick="openAddEquipmentModal()">+ Add Equipment</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>RFID Tag</th>
+                <th>Category</th>
+                <th>Location</th>
+                <th>Status</th>
+                <th>Issued To</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="equipment-table">
+              <tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted);">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- USERS PAGE -->
+      <div class="page" id="page-users">
+        <div class="section-header">
+          <div class="section-title">Registered Users</div>
+          <button class="btn btn-primary" onclick="openAddUserModal()">+ Add User</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Joined</th>
+                <th>Currently Has</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-table">
+              <tr><td colspan="6" style="text-align:center;padding:28px;color:var(--muted);">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
+      <!-- LOGS PAGE -->
+      <div class="page" id="page-logs">
+        <div class="section-header">
+          <div class="section-title">Full Activity Log</div>
+          <button class="btn btn-ghost btn-sm" onclick="exportLogs()">⬇ Export CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Equipment</th>
+                <th>Action</th>
+                <th>User</th>
+                <th>Email</th>
+                <th>Timestamp</th>
+              </tr>
+            </thead>
+            <tbody id="logs-table">
+              <tr><td colspan="5" style="text-align:center;padding:28px;color:var(--muted);">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ADD/EDIT EQUIPMENT MODAL -->
+  <div class="modal-overlay" id="eq-modal">
+    <div class="modal">
+      <div class="modal-title" id="eq-modal-title">Add Equipment</div>
+      <div class="modal-sub">Register a new piece of lab equipment</div>
+
+      <input type="hidden" id="eq-edit-id" />
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Equipment Name *</label>
+          <input type="text" id="eq-name" placeholder="e.g. Digital Oscilloscope" />
+        </div>
+        <div class="form-group">
+          <label>RFID Tag *</label>
+          <input type="text" id="eq-rfid" placeholder="e.g. A1B2C3D4" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Category</label>
+          <select id="eq-category">
+            <option>Oscilloscope</option>
+            <option>Multimeter</option>
+            <option>Power Supply</option>
+            <option>Function Generator</option>
+            <option>Soldering Equipment</option>
+            <option>Breadboard</option>
+            <option>Components</option>
+            <option>Microscope</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Location</label>
+          <input type="text" id="eq-location" placeholder="e.g. Lab 3, Shelf B" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="eq-status">
+          <option value="available">Available</option>
+          <option value="maintenance">Maintenance</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Description (optional)</label>
+        <input type="text" id="eq-desc" placeholder="Brief description" />
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('eq-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveEquipment()">Save Equipment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DELETE CONFIRM MODAL -->
+  <div class="modal-overlay" id="delete-modal">
+    <div class="modal">
+      <div class="modal-title">Delete Equipment?</div>
+      <div class="modal-sub">This will permanently remove the equipment from the database. This action cannot be undone.</div>
+      <input type="hidden" id="delete-eq-id" />
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('delete-modal')">Cancel</button>
+        <button class="btn btn-danger" onclick="confirmDelete()">Yes, Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT USER MODAL -->
+<div class="modal-overlay" id="user-modal">
+  <div class="modal">
+    <div class="modal-title">Edit User</div>
+    <div class="modal-sub">Update user details and permissions</div>
+
+    <input type="hidden" id="user-edit-id" />
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" id="user-name" placeholder="Full name" />
+      </div>
+      <div class="form-group">
+        <label>Role</label>
+        <select id="user-role">
+          <option value="student">Student</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Status</label>
+        <select id="user-status">
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Department</label>
+        <input type="text" id="user-department" placeholder="e.g. EEE" />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="text" id="user-phone" placeholder="e.g. 01XXXXXXXXX" />
+      </div>
+      <div class="form-group">
+        <label>RFID Card ID</label>
+        <input type="text" id="user-rfid" placeholder="e.g. A1B2C3D4" />
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('user-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveUser()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD USER MODAL -->
+<div class="modal-overlay" id="add-user-modal">
+  <div class="modal">
+    <div class="modal-title">Add New User</div>
+    <div class="modal-sub">Register a new student or staff account</div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Full Name *</label>
+        <input type="text" id="new-user-name" placeholder="e.g. Ahmed Ali" />
+      </div>
+      <div class="form-group">
+        <label>Email *</label>
+        <input type="email" id="new-user-email" placeholder="e.g. ahmed@kuet.ac.bd" />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Password *</label>
+        <input type="password" id="new-user-password" placeholder="Min 6 characters" />
+      </div>
+      <div class="form-group">
+        <label>Role</label>
+        <select id="new-user-role">
+          <option value="student">Student</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Department</label>
+        <input type="text" id="new-user-department" placeholder="e.g. EEE" />
+      </div>
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="text" id="new-user-phone" placeholder="e.g. 01XXXXXXXXX" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>RFID Card ID</label>
+      <input type="text" id="new-user-rfid" placeholder="e.g. A1B2C3D4 (optional)" />
+    </div>
+
+    <div id="add-user-error" style="display:none; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:8px; padding:10px 14px; font-size:13px; color:#fca5a5; margin-top:8px;"></div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('add-user-modal')">Cancel</button>
+      <button class="btn btn-primary" id="add-user-btn" onclick="registerUser()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <script type="module">
+  
+
+
+
+   let allEquipment = [];
+  let allUsers = [];
+  let allLogs = [];
+
+    // Auth guard — must be admin
+   const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user"));
+  const API_URL = "http://localhost:5000/api";
+
+async function api(endpoint) {
+
+  const response =
+    await fetch(
+      API_URL + endpoint,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`
+        }
+      }
+    );
+
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Request failed"
+    );
+  }
+
+  return data;
+}
+  if (!token || !user) {
+    window.location.href = "index.html";
+}
+
+ 
+
+   function updateStats() {
+
+  document.getElementById("stat-total")
+    .textContent = allEquipment.length;
+
+  document.getElementById("stat-available")
+    .textContent =
+      allEquipment.filter(
+        e => e.status === "available"
+      ).length;
+
+  document.getElementById("stat-issued")
+    .textContent =
+      allEquipment.filter(
+        e => e.status === "issued"
+      ).length;
+
+  // document.getElementById("stat-maintenance")
+  //   .textContent = 0;
+
+  document.getElementById("stat-users")
+    .textContent = allUsers.length;
+
+  document.getElementById("stat-logs")
+    .textContent = allLogs.length;
+
+  const overdueItems = allEquipment.filter(item => item.isOverdue).length;
+  document.getElementById("stat-overdue").textContent = overdueItems;
+
+  const totalFine = allEquipment.reduce((sum, item) => sum + (item.fine || 0), 0);
+  document.getElementById("stat-fine").textContent = totalFine;
+}
+
+    function getStatusBadge(status) {
+      const map = {
+        available: '<span class="status-badge badge-available">Available</span>',
+        issued: '<span class="status-badge badge-issued">Issued</span>',
+        maintenance: '<span class="status-badge badge-maintenance">Maintenance</span>',
+      };
+      return map[status] || status;
+    }
+
+    function renderEquipmentTable() {
+      const tbody = document.getElementById("equipment-table");
+      if (!allEquipment.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center">No equipment found</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = allEquipment.map(eq => `
+        <tr>
+          <td>${eq.name}</td>
+          <td class="mono">${eq.rfidTag || "-"}</td>
+          <td>${eq.category || "-"}</td>
+          <td>${eq.location || "-"}</td>
+          <td>${getStatusBadge(eq.status)}</td>
+          <td>${eq.assignedToId || "-"}</td>
+          <td>
+            <button onclick="editEquipment('${eq.id}')" class="btn btn-sm">Edit</button>
+            <button onclick="deleteEquipmentUI('${eq.id}')" class="btn btn-sm btn-danger">Delete</button>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function renderUsersTable() {
+  const tbody = document.getElementById("users-table");
+  if (!allUsers.length) {
+    tbody.innerHTML = `<tr><td colspan="6">No users found</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = allUsers.map(u => `
+    <tr>
+      <td>${u.name}</td>
+      <td>${u.email}</td>
+      <td>${u.role}</td>
+      <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+      <td>${u.borrowedEquipment?.length ? u.borrowedEquipment.map(eq => eq.name).join(", ") : "-"}</td>
+      <td class="actions-cell">
+        <button onclick="openEditUserModal('${u.id}')" class="btn btn-sm btn-ghost">Edit</button>
+        <button onclick="deleteUserUI('${u.id}')" class="btn btn-sm btn-danger">Delete</button>
+      </td>
+    </tr>
+  `).join("");
+}
+
+window.openAddUserModal = function() {
+  ['new-user-name','new-user-email','new-user-password','new-user-department','new-user-phone','new-user-rfid']
+    .forEach(id => document.getElementById(id).value = '');
+  document.getElementById('new-user-role').value = 'student';
+  const err = document.getElementById('add-user-error');
+  err.style.display = 'none';
+  err.textContent = '';
+  openModal('add-user-modal');
+};
+
+window.registerUser = async function() {
+  const name = document.getElementById('new-user-name').value.trim();
+  const email = document.getElementById('new-user-email').value.trim();
+  const password = document.getElementById('new-user-password').value;
+  const role = document.getElementById('new-user-role').value;
+  const department = document.getElementById('new-user-department').value.trim();
+  const phone = document.getElementById('new-user-phone').value.trim();
+  const rfidCardId = document.getElementById('new-user-rfid').value.trim();
+
+  const err = document.getElementById('add-user-error');
+  err.style.display = 'none';
+
+  if (!name || !email || !password) {
+    err.textContent = 'Name, email, and password are required.';
+    err.style.display = 'block';
+    return;
+  }
+
+  if (password.length < 6) {
+    err.textContent = 'Password must be at least 6 characters.';
+    err.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('add-user-btn');
+  btn.disabled = true;
+  btn.textContent = 'Creating...';
+
+  try {
+    const response = await fetch(`${API_URL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ name, email, password, role, department, phone, rfidCardId: rfidCardId || undefined })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Registration failed');
+    }
+
+    closeModal('add-user-modal');
+    await loadAdminData();
+    showToast(`User "${name}" created successfully`);
+
+  } catch (e) {
+    err.textContent = e.message;
+    err.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Create Account';
+  }
+};
+
+window.openEditUserModal = function(id) {
+  const u = allUsers.find(u => u.id === id);
+  if (!u) return;
+  document.getElementById("user-edit-id").value = u.id;
+  document.getElementById("user-name").value = u.name || "";
+  document.getElementById("user-role").value = u.role || "student";
+  document.getElementById("user-status").value = u.status || "active";
+  document.getElementById("user-department").value = u.department || "";
+  document.getElementById("user-phone").value = u.phone || "";
+  document.getElementById("user-rfid").value = u.rfidCardId || "";
+  openModal("user-modal");
+};
+
+window.saveUser = async function() {
+  const id = document.getElementById("user-edit-id").value;
+  const payload = {
+    name: document.getElementById("user-name").value,
+    role: document.getElementById("user-role").value,
+    status: document.getElementById("user-status").value,
+    department: document.getElementById("user-department").value,
+    phone: document.getElementById("user-phone").value,
+    rfidCardId: document.getElementById("user-rfid").value
+  };
+  try {
+    await fetch(`${API_URL}/users/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+    closeModal("user-modal");
+    await loadAdminData();
+    showToast("User updated");
+  } catch (err) {
+    showToast("Update failed", "error");
+  }
+};
+
+window.deleteUserUI = async function(id) {
+  if (!confirm("Delete this user? This cannot be undone.")) return;
+  try {
+    await fetch(`${API_URL}/users/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    await loadAdminData();
+    showToast("User deleted");
+  } catch (err) {
+    showToast("Delete failed", "error");
+  }
+};
+
+    function renderLogsTable() {
+      const tbody = document.getElementById("logs-table");
+      if (!allLogs.length) {
+        tbody.innerHTML = `<tr><td colspan="5">No logs</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = allLogs.map(log => `
+        <tr>
+          <td>${log.equipment?.name || "-"}</td>
+          <td>${log.action}</td>
+          <td>${log.user?.name || "-"}</td>
+          <td>${log.user?.email || "-"}</td>
+          <td>${new Date(log.createdAt).toLocaleString()}</td>
+        </tr>
+      `).join("");
+    }
+    function renderDashboardLogs() {
+      const tbody = document.getElementById("recent-logs");
+      if (!allLogs.length) {
+        tbody.innerHTML = `<tr><td colspan="5">No activity</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = allLogs.slice(0, 10).map(log => `
+        <tr>
+          <td>${log.equipment?.name || "-"}</td>
+          <td>${log.action}</td>
+          <td>${log.user?.name || "-"}</td>
+          <td>${log.equipment?.rfidTag || "-"}</td>
+          <td>${new Date(log.createdAt).toLocaleString()}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderOverdueTable() {
+      const tbody = document.getElementById("overdue-table");
+      const overdueEquipment = allEquipment.filter(eq => eq.isOverdue);
+
+      if (!overdueEquipment.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:28px;color:var(--muted);">No overdue equipment</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = overdueEquipment.map(eq => `
+        <tr>
+          <td>${eq.name}</td>
+          <td>${eq.assignedTo?.name || "-"}</td>
+          <td>${eq.dueDate ? new Date(eq.dueDate).toLocaleDateString() : "-"}</td>
+          <td>${eq.overdueDays || 0}</td>
+          <td>৳${eq.fine || 0}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderIssuedTable() {
+      const tbody = document.getElementById("issued-table");
+      const issued = allEquipment.filter(e => e.status === "issued");
+      if (!issued.length) {
+        tbody.innerHTML = `<tr><td colspan="5">No issued equipment</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = issued.map(eq => `
+        <tr>
+          <td>${eq.name}</td>
+          <td>${eq.rfidTag}</td>
+          <td>${eq.assignedToId || "-"}</td>
+          <td>${eq.assignedAt ? new Date(eq.assignedAt).toLocaleString() : "-"}</td>
+          <td>-</td>
+        </tr>
+      `).join("");
+    }
+
+    function populateUserSelect() {
+      const sel = document.getElementById("scan-user");
+      const current = sel.value;
+      sel.innerHTML = '<option value="">— Select a user —</option>';
+      allUsers.forEach(user => {
+        sel.innerHTML += `<option value="${user.id}">${user.name}</option>`;
+      });
+      if (current) {
+        sel.value = current;
+      }
+    }
+
+    // ====== CRUD ======
+    window.openAddEquipmentModal = () => {
+      document.getElementById('eq-modal-title').textContent = 'Add Equipment';
+      document.getElementById('eq-edit-id').value = '';
+      ['eq-name','eq-rfid','eq-location','eq-desc'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('eq-category').value = 'Oscilloscope';
+      document.getElementById('eq-status').value = 'available';
+      openModal('eq-modal');
+    };
+
+    window.openEditEquipmentModal = (id) => {
+      const eq = allEquipment[id];
+      if (!eq) return;
+      document.getElementById('eq-modal-title').textContent = 'Edit Equipment';
+      document.getElementById('eq-edit-id').value = id;
+      document.getElementById('eq-name').value = eq.name || '';
+      document.getElementById('eq-rfid').value = eq.rfidTag || '';
+      document.getElementById('eq-category').value = eq.category || 'Other';
+      document.getElementById('eq-location').value = eq.location || '';
+      document.getElementById('eq-status').value = eq.status || 'available';
+      document.getElementById('eq-desc').value = eq.description || '';
+      openModal('eq-modal');
+    };
+
+    
+
+    window.openDeleteModal = (id) => {
+      document.getElementById('delete-eq-id').value = id;
+      openModal('delete-modal');
+    };
+
+    window.editEquipment = function(id) {
+      const eq = allEquipment.find(e => e.id === id);
+      if (!eq) return;
+      document.getElementById("eq-edit-id").value = eq.id;
+      document.getElementById("eq-name").value = eq.name;
+      document.getElementById("eq-rfid").value = eq.rfidTag || "";
+      document.getElementById("eq-category").value = eq.category || "";
+      document.getElementById("eq-location").value = eq.location || "";
+      document.getElementById("eq-status").value = eq.status || "available";
+      document.getElementById("eq-desc").value = eq.description || "";
+      document.getElementById("eq-modal-title").textContent = "Edit Equipment";
+      openModal("eq-modal");
+    };
+
+        async function loadAdminData() {
+
+  try {
+
+    const equipmentData =
+      await api("/equipment");
+
+    const usersData =
+      await api("/users");
+
+    const transactionData =
+      await api("/transactions");
+
+    allEquipment =
+      equipmentData.equipment || [];
+
+    allUsers =
+      usersData.users || [];
+
+    allLogs =
+      transactionData.transactions || [];
+
+    updateStats();
+
+    console.log("Equipment:", allEquipment);
+    console.log("Users:", allUsers);
+    console.log("Logs:", allLogs);
+
+    renderEquipmentTable();
+
+    renderUsersTable();
+
+    renderLogsTable();
+
+    renderDashboardLogs();
+
+    renderOverdueTable();
+
+    renderIssuedTable();
+
+    populateUserSelect();
+
+  } catch (err) {
+
+    console.error(err);
+  }
+}
+
+    window.saveEquipment = async function() {
+      const id = document.getElementById("eq-edit-id").value;
+      const payload = {
+        name: document.getElementById("eq-name").value,
+        rfidTag: document.getElementById("eq-rfid").value,
+        category: document.getElementById("eq-category").value,
+        location: document.getElementById("eq-location").value,
+        status: document.getElementById("eq-status").value,
+        description: document.getElementById("eq-desc").value
+      };
+      try {
+        if (id) {
+          await fetch(
+            `${API_URL}/equipment/${id}`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify(payload)
+            }
+          );
+        } else {
+          await fetch(
+            `${API_URL}/equipment`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify(payload)
+            }
+          );
+        }
+        closeModal("eq-modal");
+        await loadAdminData();
+        showToast("Equipment saved");
+      } catch(err) {
+        console.error(err);
+        showToast("Failed", "error");
+      }
+    };
+
+    window.deleteEquipmentUI = async function(id) {
+      if (!confirm("Delete equipment?")) return;
+      try {
+        await fetch(
+          `${API_URL}/equipment/${id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+        await loadAdminData();
+        showToast("Deleted");
+      } catch(err) {
+        console.error(err);
+        showToast("Delete failed", "error");
+      }
+    };
+
+    // ====== MANUAL SCAN ======
+ 
+
+    
+
+    
+
+    window.viewUserHistory = (uid) => {
+      showToast('ℹ️ Switch to Activity Logs and filter by user');
+    };
+
+    // ====== EXPORT ======
+    window.exportLogs = () => {
+      const rows = [['Equipment', 'Action', 'User', 'Email', 'Timestamp']];
+      Object.values(allLogs).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0)).forEach(l => {
+        const eq = allEquipment[l.equipmentId] || {};
+        rows.push([eq.name||l.equipmentId, l.action, l.userName, l.userEmail, l.timestamp ? new Date(l.timestamp).toLocaleString() : '']);
+      });
+      const csv = rows.map(r => r.map(c => `"${c||''}"`).join(',')).join('\n');
+      const a = document.createElement('a');
+      a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+      a.download = `lab-logs-${Date.now()}.csv`;
+      a.click();
+    };
+
+    // ====== UI HELPERS ======
+    window.showPage = (page) => {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById(`page-${page}`).classList.add('active');
+      const titles = { dashboard: 'Admin Dashboard', equipment: 'Equipment Registry', users: 'Registered Users', 'manual-scan': 'Manual Scan', logs: 'Activity Logs' };
+      document.getElementById('page-title').textContent = titles[page] || page;
+      document.querySelectorAll('.nav-item').forEach(n => {
+        if (n.getAttribute('onclick')?.includes(`'${page}'`)) n.classList.add('active');
+      });
+    };
+
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+    window.closeModal = closeModal;
+
+    // Close modal on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('open'); });
+    });
+
+    window.doLogout = () => {
+
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+
+  window.location.href = "index.html";
+};
+
+    function showToast(msg, type = 'success') {
+      const c = document.getElementById('toast-container');
+      const t = document.createElement('div');
+      t.className = `toast ${type}`;
+      t.textContent = msg;
+      c.appendChild(t);
+      setTimeout(() => t.remove(), 3500);
+    }
+    window.showToast = showToast;
+   
+    loadAdminData();
+  </script>
+</body>
+</html>

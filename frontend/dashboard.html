@@ -1,0 +1,1189 @@
+<!-- dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lab Equipment Hub — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0f1e;
+      --surface: #111827;
+      --surface2: #1a2236;
+      --surface3: #1f2d44;
+      --border: rgba(99,179,237,0.12);
+      --accent: #3b82f6;
+      --accent2: #06b6d4;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --warning: #f59e0b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: 240px;
+      height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      padding: 24px 0;
+    }
+    .sidebar-logo {
+      padding: 0 24px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      margin-bottom: 10px;
+      box-shadow: 0 0 20px rgba(59,130,246,0.3);
+    }
+    .logo-text {
+      font-family: 'Space Mono', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #60a5fa, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .logo-sub {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+      letter-spacing: 1px;
+    }
+    .nav {
+      flex: 1;
+      padding: 20px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+      transition: all 0.2s;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: rgba(59,130,246,0.15); color: var(--accent); }
+    .nav-item .icon { font-size: 16px; width: 20px; }
+    .nav-section {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      padding: 16px 14px 6px;
+      font-family: 'Space Mono', monospace;
+    }
+    .sidebar-bottom {
+      padding: 16px 12px;
+      border-top: 1px solid var(--border);
+    }
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--surface2);
+      border-radius: 10px;
+    }
+    .user-avatar {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .user-info { flex: 1; min-width: 0; }
+    .user-name { font-size: 13px; font-weight: 600; truncate: ellipsis; white-space: nowrap; overflow: hidden; }
+    .user-role { font-size: 11px; color: var(--muted); }
+    .logout-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 4px;
+      transition: color 0.2s;
+    }
+    .logout-btn:hover { color: var(--danger); }
+
+    /* MAIN */
+    .main {
+      margin-left: 240px;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+    .topbar {
+      position: sticky;
+      top: 0;
+      background: rgba(10,15,30,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 50;
+    }
+    .topbar-title { font-size: 20px; font-weight: 600; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .search-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-size: 14px;
+      color: var(--text);
+      width: 240px;
+      outline: none;
+      font-family: 'DM Sans', sans-serif;
+      transition: border-color 0.2s;
+    }
+    .search-box:focus { border-color: var(--accent); }
+    .search-box::placeholder { color: var(--muted); }
+
+    .content { padding: 32px; }
+
+    /* STATS */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      opacity: 0.06;
+    }
+    .stat-card.blue::after { background: var(--accent); }
+    .stat-card.cyan::after { background: var(--accent2); }
+    .stat-card.green::after { background: var(--success); }
+    .stat-card.orange::after { background: var(--warning); }
+
+    .stat-icon { font-size: 22px; margin-bottom: 14px; }
+    .stat-value { font-size: 32px; font-weight: 700; font-family: 'Space Mono', monospace; line-height: 1; }
+    .stat-label { font-size: 13px; color: var(--muted); margin-top: 6px; }
+
+    /* SECTION */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .section-title { font-size: 16px; font-weight: 600; }
+    .filter-tabs { display: flex; gap: 6px; }
+    .filter-tab {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: none;
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.2s;
+    }
+    .filter-tab.active {
+      background: rgba(59,130,246,0.15);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* EQUIPMENT GRID */
+    .equipment-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .eq-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      transition: all 0.2s;
+      cursor: default;
+    }
+    .eq-card:hover { border-color: rgba(99,179,237,0.3); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .eq-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+    .eq-icon {
+      width: 44px; height: 44px;
+      background: var(--surface2);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'Space Mono', monospace;
+    }
+    .badge-available { background: rgba(34,197,94,0.12); color: var(--success); border: 1px solid rgba(34,197,94,0.2); }
+    .badge-issued { background: rgba(239,68,68,0.12); color: var(--danger); border: 1px solid rgba(239,68,68,0.2); }
+    .badge-maintenance { background: rgba(245,158,11,0.12); color: var(--warning); border: 1px solid rgba(245,158,11,0.2); }
+
+    .eq-name { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .eq-id { font-size: 12px; color: var(--muted); font-family: 'Space Mono', monospace; }
+    .eq-meta {
+      display: flex;
+      gap: 12px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .eq-meta span { display: flex; align-items: center; gap: 4px; }
+
+    /* HISTORY TABLE */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      padding: 14px 20px;
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+    tbody td {
+      padding: 14px 20px;
+      font-size: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: rgba(59,130,246,0.04); }
+    .mono { font-family: 'Space Mono', monospace; font-size: 12px; }
+
+    /* MY ISSUED SECTION */
+    .issued-list { display: flex; flex-direction: column; gap: 10px; }
+    .issued-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .issued-info { flex: 1; }
+    .issued-name { font-size: 14px; font-weight: 600; }
+    .issued-detail { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .return-btn {
+      padding: 7px 16px;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 8px;
+      color: #fca5a5;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.2s;
+    }
+    .return-btn:hover { background: rgba(239,68,68,0.2); }
+
+    /* PAGES */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* TOAST */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+      animation: slideIn 0.3s ease;
+      min-width: 280px;
+    }
+    .toast.success { border-color: rgba(34,197,94,0.3); }
+    .toast.error { border-color: rgba(239,68,68,0.3); }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+    /* EMPTY STATE */
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--muted);
+    }
+    .empty-icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-title { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+    .empty-text { font-size: 13px; }
+
+    /* LOADING SKELETON */
+    .skeleton {
+      background: linear-gradient(90deg, var(--surface2) 25%, var(--surface3) 50%, var(--surface2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 6px;
+    }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .notification {
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+    .notification.warning {
+      background: rgba(245,158,11,0.15);
+      border: 1px solid rgba(245,158,11,0.4);
+      color: #fbbf24;
+    }
+    .notification.danger {
+      background: rgba(239,68,68,0.15);
+      border: 1px solid rgba(239,68,68,0.4);
+      color: #f87171;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .main { margin-left: 0; }
+      .content { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🔬</div>
+      <div class="logo-text">LabEquipmentHub</div>
+      <div class="logo-sub">KUET · EEE Dept</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">Main</div>
+      <button class="nav-item active" onclick="showPage('dashboard')">
+        <span class="icon">📊</span> Dashboard
+      </button>
+      <button class="nav-item" onclick="showPage('equipment')">
+        <span class="icon">🔧</span> Equipment
+      </button>
+      <button class="nav-item" onclick="showPage('my-issued')">
+        <span class="icon">📦</span> My Issued Items
+      </button>
+      <div class="nav-section">History</div>
+      <button class="nav-item" onclick="showPage('history')">
+        <span class="icon">📋</span> Borrow History
+      </button>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="user-chip">
+        <div class="user-avatar" id="sidebar-avatar">S</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-name">Loading...</div>
+          <div class="user-role">Student</div>
+        </div>
+        <button class="logout-btn" onclick="doLogout()" title="Logout">⏏</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <div class="topbar-right">
+        <input type="text" class="search-box" placeholder="🔍  Search equipment..." id="search-input" oninput="filterEquipment()" />
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- DASHBOARD PAGE -->
+      <div class="page active" id="page-dashboard">
+        <div id="notificationArea"></div>
+        <div class="stats-grid">
+          <div class="stat-card blue">
+            <div class="stat-icon">🔧</div>
+            <div class="stat-value" id="stat-total">—</div>
+            <div class="stat-label">Total Equipment</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-icon">✅</div>
+            <div class="stat-value" id="stat-available">—</div>
+            <div class="stat-label">Available Now</div>
+          </div>
+          <div class="stat-card orange">
+            <div class="stat-icon">📦</div>
+            <div class="stat-value" id="stat-issued">—</div>
+            <div class="stat-label">Currently Issued</div>
+          </div>
+          <div class="stat-card cyan">
+            <div class="stat-icon">📋</div>
+            <div class="stat-value" id="stat-mine">—</div>
+            <div class="stat-label">I Have Borrowed</div>
+          </div>
+        </div>
+
+        <div class="section-header">
+          <div class="section-title">Recent Activity</div>
+        </div>
+        <div class="table-wrap" style="margin-bottom:32px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Equipment</th>
+                <th>Action</th>
+                <th>By</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody id="recent-activity">
+              <tr><td colspan="4" style="text-align:center;padding:30px;color:var(--muted);">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="section-header">
+          <div class="section-title">Quick Overview — Equipment</div>
+        </div>
+        <div class="equipment-grid" id="dashboard-eq-grid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- EQUIPMENT PAGE -->
+      <div class="page" id="page-equipment">
+        <div class="section-header">
+          <div class="section-title">All Equipment</div>
+          <div class="filter-tabs">
+            <button class="filter-tab active" onclick="setFilter('all', this)">All</button>
+            <button class="filter-tab" onclick="setFilter('available', this)">Available</button>
+            <button class="filter-tab" onclick="setFilter('issued', this)">Issued</button>
+            <button class="filter-tab" onclick="setFilter('maintenance', this)">Maintenance</button>
+          </div>
+        </div>
+        <div class="equipment-grid" id="equipment-grid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- MY ISSUED ITEMS PAGE -->
+      <div class="page" id="page-my-issued">
+        <div class="section-header">
+          <div class="section-title">My Currently Issued Items</div>
+        </div>
+        <div class="issued-list" id="issued-list">
+          <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <div class="empty-title">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORY PAGE -->
+      <div class="page" id="page-history">
+        <div class="section-header">
+          <div class="section-title">Your Borrow History</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Equipment</th>
+                <th>RFID Tag</th>
+                <th>Issued At</th>
+                <th>Returned At</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="history-table">
+              <tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted);">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <script type="module">
+    
+    const API_URL = "http://localhost:5000/api";
+
+const token = localStorage.getItem("token");
+const user = JSON.parse(localStorage.getItem("user"));
+
+if (!token || !user) {
+  window.location.href = "index.html";
+}
+
+document.getElementById("sidebar-name").textContent = user.name;
+document.getElementById("sidebar-avatar").textContent =
+  user.name.charAt(0).toUpperCase();
+
+let allEquipment = [];
+let myEquipment = [];
+let myTransactions = [];
+let currentFilter = "all";
+
+// ----------------------------
+// API Helper
+// ----------------------------
+
+async function api(endpoint) {
+
+  const response = await fetch(
+    API_URL + endpoint,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Request failed"
+    );
+  }
+
+  return data;
+}
+
+function showDueNotifications(equipmentList) {
+  const area = document.getElementById("notificationArea");
+  area.innerHTML = "";
+
+  equipmentList.forEach(item => {
+    if (item.notifyTomorrow) {
+      area.innerHTML += `
+        <div class="notification warning">
+          ⚠ Return tomorrow
+        </div>
+      `;
+    }
+
+    if (item.fine > 0) {
+      area.innerHTML += `
+        <div class="notification danger">
+          🚨 OVERDUE<br>Fine:${item.fine} Taka
+        </div>
+      `;
+    }
+  });
+}
+
+// ----------------------------
+// Dashboard Loader
+// ----------------------------
+
+async function loadDashboard() {
+
+  try {
+
+    const equipmentData =
+      await api("/equipment");
+
+    const myEquipmentData =
+      await api(
+        `/users/${user.id}/equipment`
+      );
+
+    const transactionData =
+      await api(
+        `/transactions/user/${user.id}`
+      );
+
+    allEquipment =
+      equipmentData.equipment || [];
+
+    myEquipment =
+      myEquipmentData.equipment || [];
+
+    showDueNotifications(myEquipment);
+
+    myTransactions =
+      transactionData.transactions || [];
+
+    updateStats();
+
+    renderDashboardEquipment();
+
+    renderEquipmentPage();
+
+    renderMyIssued();
+
+    renderRecentActivity();
+
+    renderHistory();
+
+  } catch (err) {
+
+    console.error(err);
+
+    showToast(
+      err.message,
+      "error"
+    );
+  }
+}
+
+// ----------------------------
+// Stats
+// ----------------------------
+
+function updateStats() {
+
+  const available =
+    allEquipment.filter(
+      e => e.status === "available"
+    ).length;
+
+  const issued =
+    allEquipment.filter(
+      e => e.status === "issued"
+    ).length;
+
+  document.getElementById(
+    "stat-total"
+  ).textContent =
+    allEquipment.length;
+
+  document.getElementById(
+    "stat-available"
+  ).textContent =
+    available;
+
+  document.getElementById(
+    "stat-issued"
+  ).textContent =
+    issued;
+
+  document.getElementById(
+    "stat-mine"
+  ).textContent =
+    myEquipment.length;
+}
+
+// ----------------------------
+// Equipment Card
+// ----------------------------
+
+function createEquipmentCard(eq) {
+
+  const badgeClass =
+    eq.status === "available"
+      ? "badge-available"
+      : "badge-issued";
+
+  return `
+    <div class="eq-card">
+
+      <div class="eq-header">
+
+        <div class="eq-icon">
+          🔧
+        </div>
+
+        <span class="status-badge ${badgeClass}">
+          ${eq.status.toUpperCase()}
+        </span>
+
+      </div>
+
+      <div class="eq-name">
+        ${eq.name}
+      </div>
+
+      <div class="eq-id">
+        ${eq.rfidTag}
+      </div>
+
+      <div class="eq-meta">
+
+        <span>
+          📍 ${eq.location || "-"}
+        </span>
+
+        <span>
+          🏷 ${eq.category || "-"}
+        </span>
+
+      </div>
+
+    </div>
+  `;
+}
+
+// ----------------------------
+// Dashboard Equipment
+// ----------------------------
+
+function renderDashboardEquipment() {
+
+  const grid =
+    document.getElementById(
+      "dashboard-eq-grid"
+    );
+
+  grid.innerHTML =
+    allEquipment
+      .slice(0, 6)
+      .map(createEquipmentCard)
+      .join("");
+}
+
+// ----------------------------
+// Equipment Page
+// ----------------------------
+
+function renderEquipmentPage() {
+
+  let data =
+    [...allEquipment];
+
+  if (
+    currentFilter !== "all"
+  ) {
+
+    data =
+      data.filter(
+        e =>
+          e.status === currentFilter
+      );
+  }
+
+  const search =
+    document
+      .getElementById(
+        "search-input"
+      )
+      .value
+      .toLowerCase();
+
+  if (search) {
+
+    data =
+      data.filter(
+        e =>
+          e.name
+            .toLowerCase()
+            .includes(search)
+      );
+  }
+
+  const grid =
+    document.getElementById(
+      "equipment-grid"
+    );
+
+  if (!data.length) {
+
+    grid.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-title">
+          No Equipment Found
+        </div>
+      </div>
+    `;
+
+    return;
+  }
+
+  grid.innerHTML =
+    data
+      .map(createEquipmentCard)
+      .join("");
+}
+
+// ----------------------------
+// My Issued Equipment
+// ----------------------------
+
+function renderMyIssued() {
+  const container = document.getElementById("issued-list");
+
+  if (!myEquipment.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <div class="empty-title">No issued equipment</div>
+        <div class="empty-text">You have no borrowed equipment right now.</div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = myEquipment.map(eq => {
+    let dueBadge = "";
+    let fineBlock = "";
+
+    if (eq.isOverdue) {
+      dueBadge = `<span class="status-badge badge-issued">OVERDUE</span>`;
+      fineBlock = `
+        <div style="margin-top:10px; padding:10px 14px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:8px; font-size:13px; color:#fca5a5;">
+          🚨 Overdue by <strong>${eq.overdueDays}</strong> day(s) — Fine: <strong>৳${eq.fine}</strong>
+        </div>
+      `;
+    } else if (eq.remainingDays === 1) {
+      dueBadge = `<span class="status-badge badge-maintenance">DUE TOMORROW</span>`;
+    } else if (eq.remainingDays !== null) {
+      dueBadge = `<span class="status-badge badge-available">${eq.remainingDays} day(s) left</span>`;
+    }
+
+    const dueDateStr = eq.dueDate
+      ? new Date(eq.dueDate).toLocaleDateString()
+      : "-";
+
+    return `
+      <div class="issued-item" style="flex-direction:column; align-items:flex-start;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%;">
+          <div class="issued-info">
+            <div class="issued-name">${eq.name}</div>
+            <div class="issued-detail" style="margin-top:4px;">
+              RFID: ${eq.rfidTag || "-"} &nbsp;|&nbsp;
+              📍 ${eq.location || "-"} &nbsp;|&nbsp;
+              🏷 ${eq.category || "-"}
+            </div>
+            <div class="issued-detail" style="margin-top:4px;">
+              Due: <strong>${dueDateStr}</strong>
+            </div>
+          </div>
+          <div style="flex-shrink:0; margin-left:16px;">
+            ${dueBadge}
+          </div>
+        </div>
+        ${fineBlock}
+      </div>
+    `;
+  }).join("");
+}
+
+// ----------------------------
+// Recent Activity
+// ----------------------------
+
+function renderRecentActivity() {
+
+  const tbody =
+    document.getElementById(
+      "recent-activity"
+    );
+
+  const rows =
+    myTransactions
+      .slice(0, 10)
+      .map(t => {
+
+        const equipmentName =
+          t.equipment?.name ||
+          t.equipmentId;
+
+        return `
+          <tr>
+
+            <td>${equipmentName}</td>
+
+            <td>
+              ${t.action}
+            </td>
+
+            <td>
+              ${user.name}
+            </td>
+
+            <td>
+              ${new Date(
+                t.createdAt
+              ).toLocaleString()}
+            </td>
+
+          </tr>
+        `;
+      })
+      .join("");
+
+  tbody.innerHTML =
+    rows ||
+    `<tr>
+      <td colspan="4">
+        No activity found
+      </td>
+    </tr>`;
+}
+
+// ----------------------------
+// History
+// ----------------------------
+
+function renderHistory() {
+  const tbody = document.getElementById("history-table");
+
+  if (!myTransactions.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted);">No history</td></tr>`;
+    return;
+  }
+
+  // Only show borrow rows; find the matching return for each
+  const borrowRows = myTransactions.filter(t => t.action === "borrow");
+
+  const rows = borrowRows.map(borrow => {
+    const eq = borrow.equipment || {};
+
+    // Find the earliest return transaction for the same equipment AFTER this borrow
+    const matchingReturn = myTransactions.find(t =>
+      t.action === "return" &&
+      t.equipmentId === borrow.equipmentId &&
+      new Date(t.createdAt) > new Date(borrow.createdAt)
+    );
+
+    const returnedAt = matchingReturn
+      ? new Date(matchingReturn.createdAt).toLocaleString()
+      : "-";
+
+    const statusBadge = matchingReturn
+      ? `<span class="status-badge badge-available">Returned</span>`
+      : `<span class="status-badge badge-issued">Not Returned</span>`;
+
+    return `
+      <tr>
+        <td>${eq.name || "-"}</td>
+        <td class="mono">${eq.rfidTag || "-"}</td>
+        <td>${new Date(borrow.createdAt).toLocaleString()}</td>
+        <td>${returnedAt}</td>
+        <td>${statusBadge}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = rows.join("");
+}
+
+// ----------------------------
+// Navigation
+// ----------------------------
+
+window.showPage = function(page) {
+
+  document
+    .querySelectorAll(".page")
+    .forEach(
+      p => p.classList.remove("active")
+    );
+
+  document
+    .getElementById(
+      `page-${page}`
+    )
+    .classList.add("active");
+
+  document
+    .querySelectorAll(".nav-item")
+    .forEach(
+      n => n.classList.remove("active")
+    );
+
+  event.target.classList.add(
+    "active"
+  );
+
+  document.getElementById(
+    "page-title"
+  ).textContent =
+    page
+      .replace("-", " ")
+      .replace(
+        /\b\w/g,
+        c => c.toUpperCase()
+      );
+};
+
+// ----------------------------
+// Filter
+// ----------------------------
+
+window.setFilter = function(
+  filter,
+  btn
+) {
+
+  currentFilter =
+    filter;
+
+  document
+    .querySelectorAll(
+      ".filter-tab"
+    )
+    .forEach(
+      b => b.classList.remove("active")
+    );
+
+  btn.classList.add(
+    "active"
+  );
+
+  renderEquipmentPage();
+};
+
+// ----------------------------
+// Search
+// ----------------------------
+
+window.filterEquipment =
+  renderEquipmentPage;
+
+// ----------------------------
+// Logout
+// ----------------------------
+
+window.doLogout = function() {
+
+  localStorage.removeItem(
+    "token"
+  );
+
+  localStorage.removeItem(
+    "user"
+  );
+
+  window.location.href =
+    "index.html";
+};
+
+// ----------------------------
+// Toast
+// ----------------------------
+
+function showToast(
+  message,
+  type = "success"
+) {
+
+  const container =
+    document.getElementById(
+      "toast-container"
+    );
+
+  const toast =
+    document.createElement("div");
+
+  toast.className =
+    `toast ${type}`;
+
+  toast.textContent =
+    message;
+
+  container.appendChild(
+    toast
+  );
+
+  setTimeout(() => {
+
+    toast.remove();
+
+  }, 3000);
+}
+
+// ----------------------------
+
+loadDashboard();
+
+  </script>
+</body>
+</html>
