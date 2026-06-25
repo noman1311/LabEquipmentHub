@@ -20,7 +20,7 @@ app.use(cors({
   origin: [
     "http://localhost:3000",
     "http://localhost:5500",
-    "https://labequipmenthub.vercel.app"
+    "https://lab-equipment-hub.vercel.app"
   ],
   credentials: true
 }));
