@@ -208,13 +208,34 @@ export const getUserEquipment = async (req, res) => {
       success: true,
       user: {
         id: user.id,
-        name: user.name
+        name: user.name,
+        pendingFine: user.pendingFine || 0
       },
       equipment: enhancedEquipment
     });
 
   } catch (err) {
 
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
+
+export const clearUserFine = async (req, res) => {
+  try {
+    const user = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { pendingFine: 0 }
+    });
+
+    res.json({
+      success: true,
+      message: "Fine cleared",
+      user
+    });
+  } catch (err) {
     res.status(500).json({
       success: false,
       message: err.message

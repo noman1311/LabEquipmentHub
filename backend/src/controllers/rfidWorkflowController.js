@@ -93,6 +93,18 @@ export const processRFID = async (req, res) => {
 
       if (equipment.status === "available") {
 
+        // Block borrow if user has unpaid fine
+        const borrowingUser = await prisma.user.findUnique({
+          where: { id: activeSession.userId }
+        });
+
+        if (borrowingUser.pendingFine > 0) {
+          return res.status(403).json({
+            success: false,
+            message: `Cannot borrow. You have a pending fine of ৳${borrowingUser.pendingFine}. Please contact admin to clear it.`
+          });
+        }
+
         const borrowDate = new Date();
         const dueDate = new Date(
           borrowDate.getTime() + 7 * 24 * 60 * 60 * 1000
@@ -126,10 +138,25 @@ export const processRFID = async (req, res) => {
         });
       }
 
+     // Calculate fine at return time and add to user's pendingFine
+      let fineToAdd = 0;
+      if (equipment.dueDate && new Date() > new Date(equipment.dueDate)) {
+        const overdueDays = Math.ceil(
+          (new Date() - new Date(equipment.dueDate)) / (1000 * 60 * 60 * 24)
+        );
+        fineToAdd = overdueDays * 10;
+      }
+
+      // Add fine to user's pendingFine (never reset on return)
+      if (fineToAdd > 0) {
+        await prisma.user.update({
+          where: { id: activeSession.userId },
+          data: { pendingFine: { increment: fineToAdd } }
+        });
+      }
+
       await prisma.equipment.update({
-        where: {
-          id: equipment.id
-        },
+        where: { id: equipment.id },
         data: {
           status: "available",
           assignedToId: null,
@@ -150,7 +177,8 @@ export const processRFID = async (req, res) => {
       return res.json({
         success: true,
         action: "equipment_returned",
-        equipment: equipment.name
+        equipment: equipment.name,
+        fineAdded: fineToAdd
       });
     }
 

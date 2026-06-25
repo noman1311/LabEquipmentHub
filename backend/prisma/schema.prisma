@@ -18,6 +18,7 @@ model User {
   status       String   @default("active")
   department   String?
   phone        String?
+  pendingFine  Int      @default(0)
 
   rfidCardId    String?  @unique
 

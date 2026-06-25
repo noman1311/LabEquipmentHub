@@ -646,29 +646,36 @@ async function api(endpoint) {
   return data;
 }
 
-function showDueNotifications(equipmentList) {
+function showDueNotifications(equipmentList, pendingFine = 0) {
   const area = document.getElementById("notificationArea");
   area.innerHTML = "";
+
+  if (pendingFine > 0) {
+    area.innerHTML += `
+      <div class="notification danger">
+        🚨 You have a pending fine of <strong>৳${pendingFine}</strong>. You cannot borrow any equipment until an admin clears it.
+      </div>
+    `;
+  }
 
   equipmentList.forEach(item => {
     if (item.notifyTomorrow) {
       area.innerHTML += `
         <div class="notification warning">
-          ⚠ Return tomorrow
+          ⚠ Return tomorrow: <strong>${item.name}</strong>
         </div>
       `;
     }
 
-    if (item.fine > 0) {
+    if (item.isOverdue) {
       area.innerHTML += `
         <div class="notification danger">
-          🚨 OVERDUE<br>Fine:${item.fine} Taka
+          🚨 OVERDUE: <strong>${item.name}</strong> — ${item.overdueDays} day(s) late
         </div>
       `;
     }
   });
 }
-
 // ----------------------------
 // Dashboard Loader
 // ----------------------------
@@ -696,7 +703,8 @@ async function loadDashboard() {
     myEquipment =
       myEquipmentData.equipment || [];
 
-    showDueNotifications(myEquipment);
+    const pendingFine = myEquipmentData.user?.pendingFine || 0;
+    showDueNotifications(myEquipment, pendingFine);
 
     myTransactions =
       transactionData.transactions || [];

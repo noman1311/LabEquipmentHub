@@ -1,12 +1,11 @@
 import express from "express";
 
-import {
-  getAllUsers,
-  getUserById,
-  updateUser,
-  deleteUser,
-  getUserEquipment
-} from "../controllers/userController.js";
+import { getAllUsers, 
+  getUserById, 
+  updateUser, 
+  deleteUser, 
+  getUserEquipment, 
+  clearUserFine } from "../controllers/userController.js";
 
 import {
   authenticate
@@ -15,6 +14,7 @@ import {
 import {
   requireAdmin
 } from "../middleware/adminMiddleware.js";
+
 
 const router = express.Router();
 
@@ -52,5 +52,10 @@ router.delete(
   requireAdmin,
   deleteUser
 );
+
+router.patch(
+  "/:id/clear-fine", 
+  requireAdmin, 
+  clearUserFine);
 
 export default router;

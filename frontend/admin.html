@@ -410,6 +410,15 @@
     .toast.error { border-color: rgba(239,68,68,0.3); }
     @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
 
+    .btn-warning {
+  background: rgba(234, 179, 8, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+.btn-warning:hover {
+  background: rgba(234, 179, 8, 0.25);
+}
+
     .empty-state { text-align: center; padding: 40px; color: var(--muted); }
     .empty-icon { font-size: 36px; margin-bottom: 10px; }
     .empty-title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
@@ -604,11 +613,12 @@
                 <th>Role</th>
                 <th>Joined</th>
                 <th>Currently Has</th>
+                <th>Pending Fine</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody id="users-table">
-              <tr><td colspan="6" style="text-align:center;padding:28px;color:var(--muted);">Loading...</td></tr>
+              <tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted);">Loading...</td></tr>
             </tbody>
           </table>
         </div>
@@ -934,7 +944,7 @@ async function api(endpoint) {
     function renderUsersTable() {
   const tbody = document.getElementById("users-table");
   if (!allUsers.length) {
-    tbody.innerHTML = `<tr><td colspan="6">No users found</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7">No users found</td></tr>`;
     return;
   }
   tbody.innerHTML = allUsers.map(u => `
@@ -944,13 +954,31 @@ async function api(endpoint) {
       <td>${u.role}</td>
       <td>${new Date(u.createdAt).toLocaleDateString()}</td>
       <td>${u.borrowedEquipment?.length ? u.borrowedEquipment.map(eq => eq.name).join(", ") : "-"}</td>
+      <td>${u.pendingFine > 0 ? `<span style="color:#fca5a5;font-weight:600;">৳${u.pendingFine}</span>` : `<span style="color:var(--muted);">—</span>`}</td>
       <td class="actions-cell">
         <button onclick="openEditUserModal('${u.id}')" class="btn btn-sm btn-ghost">Edit</button>
         <button onclick="deleteUserUI('${u.id}')" class="btn btn-sm btn-danger">Delete</button>
+        ${u.pendingFine > 0 ? `<button onclick="clearFineUI('${u.id}', '${u.name}')" class="btn btn-sm btn-warning">Clear Fine (৳${u.pendingFine})</button>` : ''}
       </td>
     </tr>
   `).join("");
 }
+
+window.clearFineUI = async function(id, name) {
+  if (!confirm(`Clear all pending fines for ${name}?`)) return;
+  try {
+    const response = await fetch(`${API_URL}/users/${id}/clear-fine`, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message);
+    await loadAdminData();
+    showToast(`Fine cleared for ${name}`);
+  } catch (err) {
+    showToast("Failed to clear fine", "error");
+  }
+};
 
 window.openAddUserModal = function() {
   ['new-user-name','new-user-email','new-user-password','new-user-department','new-user-phone','new-user-rfid']
